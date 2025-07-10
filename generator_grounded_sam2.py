@@ -13,6 +13,7 @@ from PIL import Image
 from sam2.build_sam import build_sam2
 from sam2.sam2_image_predictor import SAM2ImagePredictor
 from transformers import AutoProcessor, AutoModelForZeroShotObjectDetection 
+from transformers import Owlv2Processor, Owlv2ForObjectDetection
 
 from military_asset_dataloader import sample_images, get_images
 
@@ -33,7 +34,7 @@ DEVICE = "cuda" if torch.cuda.is_available() and not args.force_cpu else "cpu"
 
 # obtain the images from the dataset
 DATA_SPLIT = 'test'
-IMAGE_DATASET = get_images(split=DATA_SPLIT, start=5, end=10)
+IMAGE_DATASET = get_images(split=DATA_SPLIT, start=7, end=8)
 
 OUTPUT_DIR = Path("outputs/military-assets-segmentised/" + DATA_SPLIT)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True) # create output directories
@@ -58,14 +59,12 @@ sam2_predictor = SAM2ImagePredictor(sam2_model)
 
 # build grounding dino from huggingface
 model_id = GROUNDING_MODEL
-
 processor = AutoProcessor.from_pretrained(model_id)
 grounding_model = AutoModelForZeroShotObjectDetection.from_pretrained(model_id).to(DEVICE)
 
 # setup the input image and text prompt for SAM 2 and Grounding DINO
 # VERY important: text queries need to be lowercased + end with a dot
 text = TEXT_PROMPT
-
 
 for image in IMAGE_DATASET:
     img = image.copy()
@@ -86,7 +85,7 @@ for image in IMAGE_DATASET:
     results = processor.post_process_grounded_object_detection(
         outputs,
         inputs.input_ids,
-        box_threshold=0.4,
+        box_threshold=0.3,
         text_threshold=0.3,
         target_sizes=[image.size[::-1]]
     )
@@ -184,7 +183,7 @@ for image in IMAGE_DATASET:
 
     input_boxes = input_boxes.tolist()
     scores = scores.tolist()
-    print("the scores are: {}".format(scores))
+    # print("the scores are: {}".format(scores))
     # save the results in standard format
     results = {
         "image_name": image_name,
