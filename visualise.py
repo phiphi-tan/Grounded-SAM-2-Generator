@@ -18,18 +18,6 @@ for file in os.listdir(INPUT_DIR):
     if not (file.endswith(".jpg")):
         continue
 
-<<<<<<< HEAD
-img = Image.open('outputs/military-assets-segmentised/test/002883.jpg')
-img_cv2 = cv2.imread('outputs/military-assets-segmentised/test/002883.jpg')
-
-data = json.load(open("outputs/military-assets-segmentised/test/002883_data.json"))
-data_annotations = data['annotations']
-
-input_boxes = np.array([annotation['bbox'] for annotation in data_annotations])
-class_labels = np.array(["{} {:.2f} (mask {:.2f})".format(annotation['class_name'], annotation['confidence'], annotation['score'][0]) for annotation in data_annotations])
-class_ids = np.array(list(range(len(class_labels))))
-print(class_labels)
-=======
     image = file
     img_cv2 = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
@@ -42,7 +30,6 @@ print(class_labels)
         print("No corresponding data file found for image {}.jpg",format(image_name))
         continue
     data_annotations = data['annotations']
->>>>>>> 9055b45f6ade95ca61f49663df6bcf78c8b7dafc
 
     input_boxes = np.array([annotation['bbox'] for annotation in data_annotations])
     class_labels = np.array(["{} {:.2f} (mask {:.2f})".format(annotation['class_name'], annotation['confidence'], annotation['score'][0]) for annotation in data_annotations])
