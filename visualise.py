@@ -22,14 +22,14 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True) # create output directory
 
 DATA_DIR = 'outputs/grounded_sam2_hf_generator/test/'
 
-img = Image.open('outputs/military-assets-segmentised/test/000001.jpg')
-img_cv2 = cv2.imread('outputs/military-assets-segmentised/test/000001.jpg')
+img = Image.open('outputs/military-assets-segmentised/test/002883.jpg')
+img_cv2 = cv2.imread('outputs/military-assets-segmentised/test/002883.jpg')
 
-data = json.load(open("outputs/military-assets-segmentised/test/000001_data.json"))
+data = json.load(open("outputs/military-assets-segmentised/test/002883_data.json"))
 data_annotations = data['annotations']
 
 input_boxes = np.array([annotation['bbox'] for annotation in data_annotations])
-class_labels = np.array(["{} {:.2f} (mask {:.2f})".format(annotation['class_name'], annotation['confidence'], annotation['score']) for annotation in data_annotations])
+class_labels = np.array(["{} {:.2f} (mask {:.2f})".format(annotation['class_name'], annotation['confidence'], annotation['score'][0]) for annotation in data_annotations])
 class_ids = np.array(list(range(len(class_labels))))
 print(class_labels)
 
