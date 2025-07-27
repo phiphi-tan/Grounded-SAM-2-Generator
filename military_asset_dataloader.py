@@ -35,7 +35,7 @@ def get_images(split='test', start=0, end=None):
     dataset = get_dataset(split)
 
     if end == None:
-        return dataset
+        return dataset['image']
     
     return_ds = dataset.select(range(start, end))
     return return_ds['image']

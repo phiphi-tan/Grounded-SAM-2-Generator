@@ -23,18 +23,17 @@ Hyper parameters
 parser = argparse.ArgumentParser()
 parser.add_argument("--sam2-checkpoint", default="./checkpoints/sam2.1_hiera_large.pt")
 parser.add_argument("--sam2-model-config", default="configs/sam2.1/sam2.1_hiera_l.yaml")
-parser.add_argument("--force-cpu", action="store_true")
 args = parser.parse_args()
 
 GROUNDING_MODEL = "IDEA-Research/grounding-dino-base" # can also be "IDEA-Research/grounding-dino-tiny"
 TEXT_PROMPT = "camouflage soldier. weapon. military tank. military truck. military vehicle. civilian. soldier. civilian vehicle. military artillery. trench. military aircraft. military warship."
 SAM2_CHECKPOINT = args.sam2_checkpoint
 SAM2_MODEL_CONFIG = args.sam2_model_config
-DEVICE = "cuda" if torch.cuda.is_available() and not args.force_cpu else "cpu"
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # obtain the images from the dataset
 DATA_SPLIT = 'test'
-IMAGE_DATASET = get_images(split=DATA_SPLIT, start=7, end=8)
+IMAGE_DATASET = get_images(split=DATA_SPLIT, start=120, end=150)
 
 OUTPUT_DIR = Path("outputs/military-assets-segmentised/" + DATA_SPLIT)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True) # create output directories

@@ -38,6 +38,9 @@ Install `Grounding DINO`:
 pip install --no-build-isolation -e grounding_dino
 ```
 
+```bash
+pip install opencv-python supervision pycocotools
+```
 ## Dataset
 
 Currently I'm only using this to generate a single military asset dataset. The models will load from `military_asset_dataloader.py`

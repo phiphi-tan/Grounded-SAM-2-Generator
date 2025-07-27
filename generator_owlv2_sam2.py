@@ -23,18 +23,19 @@ Hyper parameters
 parser = argparse.ArgumentParser()
 parser.add_argument("--sam2-checkpoint", default="./checkpoints/sam2.1_hiera_large.pt")
 parser.add_argument("--sam2-model-config", default="configs/sam2.1/sam2.1_hiera_l.yaml")
-parser.add_argument("--force-cpu", action="store_true")
 args = parser.parse_args()
 
 GROUNDING_MODEL = "IDEA-Research/grounding-dino-base" # can also be "IDEA-Research/grounding-dino-tiny"
 TEXT_PROMPT = "camouflage soldier. weapon. military tank. military truck. military vehicle. civilian. soldier. civilian vehicle. military artillery. trench. military aircraft. military warship."
 SAM2_CHECKPOINT = args.sam2_checkpoint
 SAM2_MODEL_CONFIG = args.sam2_model_config
-DEVICE = "cuda" if torch.cuda.is_available() and not args.force_cpu else "cpu"
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # obtain the images from the dataset
-DATA_SPLIT = 'test'
-IMAGE_DATASET = get_images(split=DATA_SPLIT, start=7, end=8)
+DATA_SPLIT = 'val'
+IMAGE_DATASET = get_images(split=DATA_SPLIT, start=2830, end=2941)
+# print(IMAGE_DATASET)
+print("Generating {} images...".format(len(IMAGE_DATASET)))
 
 OUTPUT_DIR = Path("outputs/military-assets-segmentised/" + DATA_SPLIT)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True) # create output directories
@@ -44,12 +45,12 @@ ANNOTATION_DIR.mkdir(parents=True, exist_ok=True) # create annotation directory
 
 # environment settings
 # use bfloat16
-torch.autocast(device_type=DEVICE, dtype=torch.bfloat16).__enter__()
+# torch.autocast(device_type=DEVICE, dtype=torch.bfloat16).__enter__()
 
-if torch.cuda.is_available() and torch.cuda.get_device_properties(0).major >= 8:
-    # turn on tfloat32 for Ampere GPUs (https://pytorch.org/docs/stable/notes/cuda.html#tensorfloat-32-tf32-on-ampere-devices)
-    torch.backends.cuda.matmul.allow_tf32 = True
-    torch.backends.cudnn.allow_tf32 = True
+# if torch.cuda.is_available() and torch.cuda.get_device_properties(0).major >= 8:
+#     # turn on tfloat32 for Ampere GPUs (https://pytorch.org/docs/stable/notes/cuda.html#tensorfloat-32-tf32-on-ampere-devices)
+#     torch.backends.cuda.matmul.allow_tf32 = True
+#     torch.backends.cudnn.allow_tf32 = True
 
 # build SAM2 image predictor
 sam2_checkpoint = SAM2_CHECKPOINT
@@ -63,9 +64,9 @@ model_id = GROUNDING_MODEL
 # processor = AutoProcessor.from_pretrained(model_id)
 # grounding_model = AutoModelForZeroShotObjectDetection.from_pretrained(model_id).to(DEVICE)
 
-processor = Owlv2Processor.from_pretrained("google/owlv2-base-patch16-ensemble")
-grounding_model = Owlv2ForObjectDetection.from_pretrained("google/owlv2-base-patch16-ensemble")
-
+processor = Owlv2Processor.from_pretrained("google/owlv2-large-patch14-ensemble")
+grounding_model = Owlv2ForObjectDetection.from_pretrained("google/owlv2-large-patch14-ensemble")
+grounding_model = grounding_model.to(DEVICE)
 # setup the input image and text prompt for SAM 2 and Grounding DINO
 # VERY important: text queries need to be lowercased + end with a dot
 # text = TEXT_PROMPT
@@ -80,7 +81,7 @@ for image in IMAGE_DATASET:
     image_path = image.filename
     image_name = image_path.split("\\")[-1].rstrip('.jpg')
 
-    print('Generating image: {}'.format(image_name))
+    print('Generating image: {}.jpg'.format(image_name))
 
     sam2_predictor.set_image(np.array(image.convert("RGB")))
 
@@ -97,9 +98,12 @@ for image in IMAGE_DATASET:
     # )
 
     target_sizes = torch.Tensor([image.size[::-1]])
-    results = processor.post_process_object_detection(outputs=outputs, target_sizes=target_sizes, threshold=0.2)
+    results = processor.post_process_object_detection(outputs=outputs, target_sizes=target_sizes, threshold=0.3)
 
-    print("results is: {}".format(results))
+    # change labels from tensors to text label
+    label_list = results[0]['labels'].tolist()
+    results[0]['labels'] = [text[0][l] for l in label_list]
+    # print("results is: {}".format(results))
 
     """
     Results is a list of dict with the following structure:
@@ -210,6 +214,5 @@ for image in IMAGE_DATASET:
         "img_width": image.width,
         "img_height": image.height,
     }
-    
     with open(os.path.join(OUTPUT_DIR, "{}_data.json".format(image_name)), "w") as f:
         json.dump(results, f, indent=4)
