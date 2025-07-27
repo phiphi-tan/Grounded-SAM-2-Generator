@@ -9,8 +9,8 @@ import os
 import pycocotools.mask as mask_util
 from pathlib import Path
 
-INPUT_DIR = Path('outputs/grounded_sam2_hf_generator/test/')
-OUTPUT_DIR = Path('outputs/military-assets-segmentised/test/output')
+INPUT_DIR = Path('outputs/test/')
+OUTPUT_DIR = Path('outputs/test/output')
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True) # create output directory
 
@@ -18,7 +18,7 @@ for file in os.listdir(INPUT_DIR):
     if not (file.endswith(".jpg")):
         continue
 
-    image = file
+    image = Image.open(os.path.join(INPUT_DIR, file))
     img_cv2 = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
     image_name = image.filename.split("\\")[-1].rstrip('.jpg')
@@ -29,6 +29,7 @@ for file in os.listdir(INPUT_DIR):
     except FileNotFoundError:
         print("No corresponding data file found for image {}.jpg",format(image_name))
         continue
+    
     data_annotations = data['annotations']
 
     input_boxes = np.array([annotation['bbox'] for annotation in data_annotations])
@@ -56,7 +57,8 @@ for file in os.listdir(INPUT_DIR):
     annotated_frame = box_annotator.annotate(scene=img_cv2.copy(), detections=detections)
     label_annotator = sv.LabelAnnotator(color=ColorPalette.from_hex(CUSTOM_COLOR_MAP))
     annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=detections, labels=class_labels)
+    cv2.imwrite(os.path.join(OUTPUT_DIR, "{}_bbox.jpg".format(image_name)), annotated_frame)
     mask_annotator = sv.MaskAnnotator(color=ColorPalette.from_hex(CUSTOM_COLOR_MAP))
     annotated_frame = mask_annotator.annotate(scene=annotated_frame, detections=detections)
 
-    cv2.imwrite(os.path.join(OUTPUT_DIR, "{}_constructed.jpg".format(image_name)), annotated_frame)
+    cv2.imwrite(os.path.join(OUTPUT_DIR, "{}_bbox_mask.jpg".format(image_name)), annotated_frame)
